@@ -1,0 +1,288 @@
+<div id="ttest-lab">
+  <h2>Two-sample t-test</h2>
+  <div class="text-small text-muted">Welch · two-sided · α = 0.05 · independent normal populations</div>
+  <div class="viz-controls tt-controls">
+    <label class="form-label" for="tt-delta">True mean difference, B − A <output id="tt-delta-value" class="tabular-nums">0.6 units</output><input class="form-range" id="tt-delta" type="range" min="-2" max="2" step="0.1" value="0.6"></label>
+    <label class="form-label" for="tt-n">Sample size <output id="tt-n-value" class="tabular-nums">30 per group</output><input class="form-range" id="tt-n" type="range" min="6" max="150" step="2" value="30"></label>
+    <label class="form-label" for="tt-sd">Shared population SD <output id="tt-sd-value" class="tabular-nums">1.0 units</output><input class="form-range" id="tt-sd" type="range" min="0.5" max="2.5" step="0.1" value="1"></label>
+  </div>
+  <div class="viz-row tt-actions">
+    <button class="btn btn-primary" type="button" id="tt-draw">Draw new samples</button>
+    <button class="btn" type="button" id="tt-repeat">Run 200 experiments</button>
+  </div>
+  <div class="tt-section">
+    <div class="viz-row"><h3>One experiment</h3><span class="text-small text-muted">Dots / squares: observations · bars: sample means</span></div>
+    <div id="tt-sample-plot" class="tt-plot"></div>
+    <div id="tt-results" class="viz-row tabular-nums" aria-live="polite"></div>
+    <div id="tt-interval" class="text-small tabular-nums"></div>
+  </div>
+  <div class="tt-section">
+    <div class="viz-row"><h3>Reference distribution under H₀</h3><span id="tt-null-caption" class="text-small text-muted">H₀: population means are equal</span></div>
+    <div id="tt-null-plot" class="tt-plot"></div>
+    <div class="viz-row text-small"><span class="tt-key"><span class="tt-swatch"></span>Shaded tails = two-sided p-value</span><span>Dashed lines: 5% rejection cutoffs</span></div>
+  </div>
+  <div id="tt-repeat-result" class="tt-repeat-result text-small tabular-nums" aria-live="polite" hidden></div>
+  <div id="tt-error" role="alert" hidden></div>
+</div>
+<style>
+  #ttest-lab { color:var(--foreground); }
+  #ttest-lab h2 { margin:0 96px 4px 0; }
+  #ttest-lab h3 { margin:0; }
+  #ttest-lab .tt-controls { margin-top:18px; }
+  #ttest-lab output { display:block; font-weight:400; }
+  #ttest-lab .tt-actions { margin-top:8px; }
+  #ttest-lab .tt-section { margin-top:20px; }
+  #ttest-lab .tt-plot { width:100%; min-width:0; }
+  #ttest-lab .tt-chart { display:block; overflow:visible; }
+  #ttest-lab .tt-chart text { fill:var(--foreground); font-size:12px; font-weight:400; }
+  #ttest-lab .tt-chart .domain, #ttest-lab .tt-chart .tick line { stroke:var(--border); }
+  #ttest-lab #tt-results { margin-top:2px; }
+  #ttest-lab #tt-interval { margin-top:5px; }
+  #ttest-lab .tt-key { display:inline-flex; gap:7px; align-items:center; }
+  #ttest-lab .tt-swatch { display:inline-block; width:14px; height:10px; background:var(--viz-series-3); opacity:.45; }
+  #ttest-lab .tt-repeat-result { margin-top:18px; }
+  #ttest-lab .tt-repeat-result[hidden] { display:none; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script>
+(() => {
+  const root = document.getElementById('ttest-lab');
+  const el = id => root.querySelector('#' + id);
+  if (typeof d3 === 'undefined') {
+    el('tt-error').hidden = false;
+    el('tt-error').textContent = 'The chart library did not load. Reopen this simulation to try again.';
+    return;
+  }
+  const defaults = { delta:0.6, n:30, sd:1, seed:23, batchSeed:0 };
+  let state = {...defaults}, stats, samples, batch = null, initialized = false;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const fmt = (x, digits=2) => (Math.abs(x) < Math.pow(10,-digits)/2 ? 0 : x).toFixed(digits);
+  const pLabel = p => p < 0.0001 ? '< 0.0001' : '= ' + p.toFixed(4);
+  const color = g => 'var(--viz-series-' + (g === 'A' ? 1 : 2) + ')';
+
+  function random(seed) {
+    return () => {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function normal(rng) {
+    return Math.sqrt(-2 * Math.log(1-rng())) * Math.cos(2 * Math.PI * rng());
+  }
+  function logGamma(z) {
+    const c = [676.5203681218851,-1259.1392167224028,771.3234287776531,-176.6150291621406,12.507343278686905,-0.13857109526572012,9.984369578019572e-6,1.5056327351493116e-7];
+    if (z < 0.5) return Math.log(Math.PI) - Math.log(Math.sin(Math.PI*z)) - logGamma(1-z);
+    z -= 1;
+    let x = 0.9999999999998099;
+    c.forEach((v,i) => x += v/(z+i+1));
+    const t = z+7.5;
+    return 0.5*Math.log(2*Math.PI)+(z+0.5)*Math.log(t)-t+Math.log(x);
+  }
+  function betaFraction(a,b,x) {
+    const tiny = 1e-300;
+    let c=1, d=1-(a+b)*x/(a+1);
+    if (Math.abs(d)<tiny) d=tiny;
+    d=1/d;
+    let h=d;
+    for (let m=1; m<=250; m++) {
+      const m2=2*m;
+      let aa=m*(b-m)*x/((a-1+m2)*(a+m2));
+      d=1+aa*d; if(Math.abs(d)<tiny)d=tiny;
+      c=1+aa/c; if(Math.abs(c)<tiny)c=tiny;
+      d=1/d; h*=d*c;
+      aa=-(a+m)*(a+b+m)*x/((a+m2)*(a+1+m2));
+      d=1+aa*d; if(Math.abs(d)<tiny)d=tiny;
+      c=1+aa/c; if(Math.abs(c)<tiny)c=tiny;
+      d=1/d;
+      const change=d*c; h*=change;
+      if(Math.abs(change-1)<3e-14) break;
+    }
+    return h;
+  }
+  function betaI(x,a,b) {
+    if(x<=0)return 0; if(x>=1)return 1;
+    const bt=Math.exp(logGamma(a+b)-logGamma(a)-logGamma(b)+a*Math.log(x)+b*Math.log1p(-x));
+    return x<(a+1)/(a+b+2) ? bt*betaFraction(a,b,x)/a : 1-bt*betaFraction(b,a,1-x)/b;
+  }
+  function twoTail(t,df) { return Math.max(0,Math.min(1,betaI(df/(df+t*t),df/2,0.5))); }
+  function quantile(p,df) {
+    if(p===0.5)return 0;
+    if(p<0.5)return -quantile(1-p,df);
+    let lo=0, hi=1;
+    while(twoTail(hi,df)>2*(1-p))hi*=2;
+    for(let i=0;i<65;i++) { const m=(lo+hi)/2; if(twoTail(m,df)>2*(1-p))lo=m; else hi=m; }
+    return (lo+hi)/2;
+  }
+  function density(t,df) {
+    return Math.exp(logGamma((df+1)/2)-logGamma(df/2)-0.5*Math.log(df*Math.PI)-(df+1)/2*Math.log1p(t*t/df));
+  }
+  function generate(seed) {
+    const ra=random(seed), rb=random((seed^0x9E3779B9)>>>0);
+    return {
+      A:Array.from({length:state.n},()=>state.sd*normal(ra)),
+      B:Array.from({length:state.n},()=>state.delta+state.sd*normal(rb))
+    };
+  }
+  function summarize(data) {
+    const a=d3.mean(data.A), b=d3.mean(data.B), va=d3.variance(data.A), vb=d3.variance(data.B);
+    const aa=va/data.A.length, bb=vb/data.B.length;
+    const se=Math.sqrt(aa+bb), difference=b-a;
+    const df=(aa+bb)**2/(aa**2/(data.A.length-1)+bb**2/(data.B.length-1));
+    const t=difference/se, p=twoTail(t,df);
+    return {a,b,va,vb,se,difference,df,t,p};
+  }
+  function getBatch(seed) {
+    let rejected=0;
+    const rng=random(seed);
+    for(let i=0;i<200;i++)if(summarize(generate(Math.floor(rng()*4294967296))).p<0.05)rejected++;
+    return {rejected,total:200};
+  }
+  function save() {
+    if (!window.openai?.setWidgetState) return;
+    const modelContent = {
+      test:'Two-sided independent-samples Welch t-test', nullHypothesis:'Population mean B minus A = 0',
+      normalPopulations:true, alpha:0.05, trueMeanDifference:state.delta, populationSD:state.sd,
+      sampleSizePerGroup:state.n, observedDifference:stats.difference, standardError:stats.se,
+      t:stats.t, degreesOfFreedom:stats.df, p:stats.p, confidenceInterval95:[stats.low,stats.high],
+      repeatedExperiments:batch ? {...batch,meaning:state.delta===0?'false-positive frequency':'estimated power'} : null
+    };
+    window.openai.setWidgetState({modelContent,privateContent:{version:1,...state}}).catch(()=>{});
+  }
+  function restore(saved) {
+    const s=saved?.privateContent;
+    if(!s || s.version!==1)return false;
+    state={
+      delta:Number.isFinite(s.delta)?Math.round(Math.max(-2,Math.min(2,s.delta))*10)/10:defaults.delta,
+      sd:Number.isFinite(s.sd)?Math.round(Math.max(0.5,Math.min(2.5,s.sd))*10)/10:defaults.sd,
+      n:Number.isFinite(s.n)?2*Math.round(Math.max(6,Math.min(150,s.n))/2):defaults.n,
+      seed:Number.isFinite(s.seed)?s.seed>>>0:defaults.seed,
+      batchSeed:Number.isFinite(s.batchSeed)?s.batchSeed>>>0:0
+    };
+    batch=state.batchSeed?getBatch(state.batchSeed):null;
+    return true;
+  }
+  function scaffold(container,height,title) {
+    const width=Math.max(240,container.clientWidth);
+    const svg=d3.select(container).selectAll('svg').data([null]).join('svg')
+      .attr('class','tt-chart').attr('width',width).attr('height',height).attr('viewBox',`0 0 ${width} ${height}`)
+      .attr('role','img').attr('aria-label',title);
+    return {svg,width,height,left:68,right:width-14,top:16,bottom:height-46};
+  }
+  function frameAndAxes(p,x,y,yTitle,xTitle,xTicks,yTicks) {
+    const {svg,left,right,top,bottom,width,height}=p;
+    svg.selectAll('rect[data-chart-frame]').data([null]).join('rect').attr('data-chart-frame','')
+      .attr('x',left).attr('y',top).attr('width',right-left).attr('height',bottom-top)
+      .attr('fill','none').attr('stroke','var(--border)').attr('stroke-width',1).lower();
+    svg.selectAll('.x-axis').data([null]).join('g').attr('class','x-axis').attr('transform',`translate(0,${bottom})`)
+      .call(d3.axisBottom(x).ticks(xTicks).tickSizeOuter(0));
+    const ya=d3.axisLeft(y).tickSizeOuter(0);
+    if(yTicks)ya.ticks(yTicks);
+    svg.selectAll('.y-axis').data([null]).join('g').attr('class','y-axis').attr('transform',`translate(${left},0)`).call(ya);
+    svg.selectAll('.axis-title[data-axis="x"]').data([xTitle]).join('text').attr('class','axis-title').attr('data-axis','x')
+      .attr('x',(left+right)/2).attr('y',height-7).attr('text-anchor','middle').text(d=>d);
+    svg.selectAll('.axis-title[data-axis="y"]').data([yTitle]).join('text').attr('class','axis-title').attr('data-axis','y')
+      .attr('transform',`translate(16,${(top+bottom)/2}) rotate(-90)`).attr('text-anchor','middle').text(d=>d);
+  }
+  function ease(selection,animate) { return animate&&!reducedMotion.matches?selection.transition().duration(180):selection; }
+  function preventLabelCollisions(svg) {
+    const nodes=svg.selectAll('.x-axis text,.y-axis text,.axis-title,.mean-label,.t-label').nodes();
+    const keep=[];
+    for(const node of nodes) {
+      node.style.visibility='visible';
+      const r=node.getBoundingClientRect();
+      if(keep.some(s=>r.left<s.right+4 && r.right+4>s.left && r.top<s.bottom+4 && r.bottom+4>s.top)) {
+        if(node.closest('.x-axis') || node.classList.contains('t-label'))node.style.visibility='hidden';
+      } else keep.push(r);
+    }
+  }
+  function drawSamples(animate) {
+    const p=scaffold(el('tt-sample-plot'),194,`Samples: group A mean ${fmt(stats.a)}, group B mean ${fmt(stats.b)}; ${state.n} observations per group.`);
+    const refs=[0,state.delta,stats.a,stats.b];
+    const domain=d3.extent([...samples.A,...samples.B,...refs]);
+    const pad=Math.max((domain[1]-domain[0])*0.08,0.15);
+    const x=d3.scaleLinear().domain([domain[0]-pad,domain[1]+pad]).range([p.left+6,p.right-6]);
+    const y=d3.scalePoint().domain(['A','B']).range([p.top+37,p.bottom-25]);
+    frameAndAxes(p,x,y,'Group','Measurement (arbitrary units)',p.width<440?3:6);
+    const marks=['A','B'].flatMap(g=>samples[g].map((v,i)=>({g,v,i,j:Math.sin((i+1)*19.19+(g==='A'?0:4))*12})));
+    const dots=p.svg.selectAll('.sample-mark').data(marks,d=>d.g+d.i).join(
+      enter=>enter.append('path').attr('class','sample-mark').attr('transform',d=>`translate(${x(d.v)},${y(d.g)+d.j})`),
+      update=>update,
+      exit=>exit.remove()
+    ).attr('d',d=>d3.symbol().type(d.g==='A'?d3.symbolCircle:d3.symbolSquare).size(23)())
+      .attr('fill',d=>color(d.g)).attr('opacity',0.6);
+    ease(dots,animate).attr('transform',d=>`translate(${x(d.v)},${y(d.g)+d.j})`);
+    const means=[{g:'A',v:stats.a},{g:'B',v:stats.b}];
+    const bars=p.svg.selectAll('.mean-bar').data(means).join('line').attr('class','mean-bar')
+      .attr('stroke',d=>color(d.g)).attr('stroke-width',3);
+    ease(bars,animate).attr('x1',d=>x(d.v)).attr('x2',d=>x(d.v)).attr('y1',d=>y(d.g)-17).attr('y2',d=>y(d.g)+17);
+    p.svg.selectAll('.mean-label').data(means).join('text').attr('class','mean-label')
+      .attr('x',d=>Math.max(p.left+52,Math.min(p.right-52,x(d.v)))).attr('y',d=>y(d.g)-24)
+      .attr('text-anchor','middle').text(d=>'Mean '+fmt(d.v));
+    preventLabelCollisions(p.svg);
+  }
+  function drawNull(animate) {
+    const p=scaffold(el('tt-null-plot'),202,`Null reference t distribution, ${fmt(stats.df,1)} degrees of freedom. Observed t ${fmt(stats.t)}. Shaded tails have total probability ${stats.p.toPrecision(3)}.`);
+    const crit=quantile(0.975,stats.df), tail=quantile(0.9995,stats.df), threshold=Math.abs(stats.t);
+    const extent=d3.extent([-tail,tail,-threshold,threshold,-crit,crit]);
+    const pad=(extent[1]-extent[0])*0.06;
+    const x=d3.scaleLinear().domain([extent[0]-pad,extent[1]+pad]).range([p.left+3,p.right-3]);
+    const peak=density(0,stats.df);
+    const y=d3.scaleLinear().domain([0,peak*1.25]).range([p.bottom,p.top+3]);
+    frameAndAxes(p,x,y,'Density','t statistic (unitless)',p.width<440?3:7,3);
+    const range=(a,b)=>Array.from({length:261},(_,i)=>{const t=a+(b-a)*i/260;return {t,d:density(t,stats.df)};});
+    const curve=range(...x.domain()), left=range(x.domain()[0],-threshold), right=range(threshold,x.domain()[1]);
+    const line=d3.line().x(d=>x(d.t)).y(d=>y(d.d));
+    const area=d3.area().x(d=>x(d.t)).y0(p.bottom).y1(d=>y(d.d));
+    const fills=p.svg.selectAll('.tail-fill').data([left,right]).join('path').attr('class','tail-fill')
+      .attr('fill','var(--viz-series-3)').attr('fill-opacity',0.34);
+    ease(fills,animate).attr('d',area);
+    const path=p.svg.selectAll('.null-curve').data([curve]).join('path').attr('class','null-curve')
+      .attr('fill','none').attr('stroke','var(--foreground)').attr('stroke-width',1.6);
+    ease(path,animate).attr('d',line);
+    const cuts=p.svg.selectAll('.cutoff').data([-crit,crit]).join('line').attr('class','cutoff')
+      .attr('stroke','var(--muted-foreground)').attr('stroke-width',1).attr('stroke-dasharray','4 4');
+    ease(cuts,animate).attr('x1',d=>x(d)).attr('x2',d=>x(d)).attr('y1',p.top+24).attr('y2',p.bottom);
+    const observed=p.svg.selectAll('.observed-t').data([stats.t]).join('line').attr('class','observed-t')
+      .attr('stroke','var(--viz-series-3)').attr('stroke-width',2);
+    ease(observed,animate).attr('x1',d=>x(d)).attr('x2',d=>x(d)).attr('y1',p.top+24).attr('y2',p.bottom);
+    p.svg.selectAll('.t-label').data([stats.t]).join('text').attr('class','t-label')
+      .attr('x',d=>Math.max(p.left+34,Math.min(p.right-34,x(d)))).attr('y',p.top+14).attr('text-anchor','middle').text(d=>'t = '+fmt(d));
+    preventLabelCollisions(p.svg);
+  }
+  function draw(animate=false) { drawSamples(animate); drawNull(animate); }
+  function refresh(animate=false) {
+    for(const key of ['delta','n','sd'])el('tt-'+key).value=state[key];
+    el('tt-delta-value').textContent=fmt(state.delta,1)+' units';
+    el('tt-n-value').textContent=state.n+' per group';
+    el('tt-sd-value').textContent=fmt(state.sd,1)+' units';
+    samples=generate(state.seed); stats=summarize(samples);
+    el('tt-null-caption').textContent='Equal population means · df = '+fmt(stats.df,1);
+    const margin=quantile(0.975,stats.df)*stats.se;
+    stats.low=stats.difference-margin; stats.high=stats.difference+margin;
+    const result=el('tt-results');
+    result.replaceChildren();
+    ['Difference: '+fmt(stats.difference), 'SE: '+fmt(stats.se), 't: '+fmt(stats.t), 'p '+pLabel(stats.p)].forEach(v=>{const s=document.createElement('span');s.textContent=v;result.append(s);});
+    el('tt-interval').textContent='95% CI for B − A: ['+fmt(stats.low)+', '+fmt(stats.high)+'] · '+(stats.p<0.05?'Reject H₀':'Do not reject H₀');
+    el('tt-repeat-result').hidden=!batch;
+    if(batch)el('tt-repeat-result').textContent='200 fresh experiments · '+batch.rejected+' / 200 reject H₀ ('+fmt(batch.rejected/2,1)+'%) · '+(state.delta===0?'False positives; H₀ is true':'Estimated power at these settings');
+    draw(animate&&initialized); initialized=true;
+  }
+  for(const key of ['delta','n','sd']) {
+    el('tt-'+key).addEventListener('input',()=>{state[key]=Number(el('tt-'+key).value);state.batchSeed=0;batch=null;refresh(true);});
+    el('tt-'+key).addEventListener('change',save);
+  }
+  const nextSeed=()=>Math.floor(Math.random()*4294967295)+1;
+  el('tt-draw').addEventListener('click',()=>{state.seed=nextSeed();refresh(true);save();});
+  el('tt-repeat').addEventListener('click',()=>{state.batchSeed=nextSeed();batch=getBatch(state.batchSeed);refresh();save();});
+  restore(window.openai?.widgetState);
+  refresh();
+  window.addEventListener('openai:set_globals',event=>{
+    if(event.detail?.globals?.widgetState && restore(event.detail.globals.widgetState))refresh();
+  });
+  let redraw;
+  const observer=new ResizeObserver(()=>{cancelAnimationFrame(redraw);redraw=requestAnimationFrame(()=>draw());});
+  observer.observe(el('tt-sample-plot'));
+})();
+</script>
