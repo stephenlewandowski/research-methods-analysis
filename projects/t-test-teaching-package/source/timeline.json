@@ -1,0 +1,83 @@
+[
+  {
+    "start": 0,
+    "end": 14,
+    "key": "baseline",
+    "title": "Does practice improve hazard reporting?",
+    "subtitle": "A hypothetical study with airport ground personnel",
+    "caption": "Randomly assign 40 workers to two training methods. Each worker completes one identical simulator task: correctly report a ramp hazard.",
+    "note": "One dot = one worker"
+  },
+  {
+    "start": 14,
+    "end": 27,
+    "key": "baseline",
+    "title": "Start with the difference in averages",
+    "subtitle": "Outcome: seconds to correctly report the hazard \u00b7 Lower is faster",
+    "caption": "The practice group averages 42 seconds; the briefing group averages 48. The observed difference is 6 seconds, but individual results overlap.",
+    "note": "Difference = briefing \u2212 practice"
+  },
+  {
+    "start": 27,
+    "end": 42,
+    "key": "baseline",
+    "title": "Compare the gap with its uncertainty",
+    "subtitle": "The t statistic expresses the mean difference in standard-error units",
+    "caption": "The standard error of the difference is 2.53 seconds. A 6-second gap is 2.37 standard errors from zero. Individual SD and standard error are different.",
+    "note": "SD = variation among workers"
+  },
+  {
+    "start": 42,
+    "end": 59,
+    "key": "baseline",
+    "title": "How unusual is a t value of 2.37?",
+    "subtitle": "Reference distribution if the population means are equal \u00b7 Two-sided test",
+    "caption": "If equal population means and the model assumptions hold, about 2.3% of t values are this far from zero or farther, in either direction.",
+    "note": "p is not the probability that H\u2080 is true"
+  },
+  {
+    "start": 59,
+    "end": 70,
+    "key": "gap",
+    "title": "A larger gap strengthens the evidence",
+    "subtitle": "Separate illustration \u00b7 Same sample size and individual variability",
+    "caption": "Double the mean difference from 6 to 12 seconds, keeping the same sample size and spread. The t value doubles, and the p-value becomes smaller.",
+    "note": "Only the mean difference changes"
+  },
+  {
+    "start": 70,
+    "end": 83,
+    "key": "scatter",
+    "title": "More variability weakens the evidence",
+    "subtitle": "Separate illustration \u00b7 Return to a 6-second gap and 20 workers per group",
+    "caption": "Now increase the individual SD from 8 to 14 seconds. The same 6-second gap is less precise: p = .183. This does not establish that the methods are equal.",
+    "note": "Same gap; more scatter among workers"
+  },
+  {
+    "start": 83,
+    "end": 96,
+    "key": "size",
+    "title": "A larger planned sample improves precision",
+    "subtitle": "Separate illustration \u00b7 Same 6-second gap and 14-second individual SD",
+    "caption": "Compare a planned study of 80 workers per group with 20. The individual spread stays the same, but the standard error of the difference is halved.",
+    "note": "Separate study sizes; not a stopping rule"
+  },
+  {
+    "start": 96,
+    "end": 112,
+    "key": "baseline",
+    "title": "Report the effect and its uncertainty",
+    "subtitle": "Return to the original 20-per-group example",
+    "caption": "The estimated advantage is 6 seconds, with a 95% confidence interval from 0.9 to 11.1 seconds. Decide whether that range matters operationally.",
+    "note": "Briefing \u2212 practice \u00b7 Positive favors practice"
+  },
+  {
+    "start": 112,
+    "end": 126,
+    "key": "baseline",
+    "title": "Match the test to the study design",
+    "subtitle": "Independent groups here \u00b7 A paired test answers a different design",
+    "caption": "Different workers in each group: use a two-sample t-test. The same workers before and after training: consider a paired t-test. Check assumptions first.",
+    "note": "Simulator performance is not an incident rate"
+  }
+]

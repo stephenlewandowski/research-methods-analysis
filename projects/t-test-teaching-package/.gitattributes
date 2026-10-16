@@ -1,0 +1,2 @@
+# Preserve the supplied package's original bytes, including CSV line endings.
+* -text

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="A captioned t-test demonstration for aviation and safety students, using synthetic ramp hazard reporting data.">
+<title>RSCH 650 · The t-test on the airport ramp</title>
+<style>
+  :root{color-scheme:light;--ink:#182f43;--muted:#526878;--paper:#f6f8fa;--line:#d5dee5;--accent:#216a9a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
+  main{max-width:1328px;margin:auto;padding:28px 24px 44px}
+  .eyebrow{font-size:12px;letter-spacing:.09em;color:var(--muted);margin:0 0 6px}
+  h1{font-size:28px;line-height:1.25;font-weight:600;margin:0 0 8px}
+  .intro{margin:0 0 20px;color:var(--muted);max-width:80ch}
+  video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:var(--paper);border:1px solid var(--line)}
+  .below{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:12px 0}
+  #chapter-status{margin:0;font-weight:600}
+  .hint{font-size:14px;color:var(--muted);margin:0}
+  nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:18px 0 28px}
+  button{appearance:none;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink);font:inherit;padding:11px 13px;text-align:left;cursor:pointer;min-height:44px}
+  button:hover{background:#e9f0f4}
+  button[aria-current="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+  button time{font-variant-numeric:tabular-nums;display:block;font-size:12px;opacity:.85}
+  details{border-top:1px solid var(--line);padding:15px 0}
+  summary{cursor:pointer;font-weight:600;padding:4px 0}
+  .transcript{max-width:90ch;margin-top:18px}
+  .transcript h2{font-size:17px;margin:20px 0 5px;font-weight:600}
+  .transcript p{margin:0 0 12px}
+  .note{max-width:90ch;color:var(--muted);font-size:14px}
+  a{color:var(--accent)}
+  .results{border-collapse:collapse;width:100%;margin:18px 0;font-size:14px}
+  th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}
+  th{font-weight:600}
+  @media(max-width:640px){main{padding:18px 12px}h1{font-size:23px}nav{grid-template-columns:repeat(2,minmax(0,1fr))}.intro{font-size:14px}button{font-size:14px;padding:10px}th,td{padding:6px;font-size:12px}}
+  @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">RSCH 650 · RESEARCH METHODS & ANALYSIS</p>
+  <h1>The t-test on the airport ramp</h1>
+  <p class="intro">Compare two safety-training methods using time to correctly report a simulated hazard. A 2:06 captioned animation with no audio. All data are synthetic.</p>
+  <video id="lesson-video" controls playsinline preload="metadata" poster="__POSTER_DATA__" aria-label="T-test animation with on-screen captions. A full text transcript follows the chapter navigation.">
+    <source src="__VIDEO_DATA__" type="video/mp4">
+    Your browser does not support embedded video. Play the accompanying RSCH650_T_Test_Animation.mp4 or read the transcript below.
+  </video>
+  <div class="below">
+    <p id="chapter-status" aria-live="polite">1 of 9 · A safety-training question</p>
+    <p class="hint">Choose a chapter to pause at its start. Use the video controls to play or enter full screen.</p>
+  </div>
+  <nav aria-label="Animation chapters">
+    <button type="button" data-start="0" aria-current="true"><time>0:00</time>1 · The safety question</button>
+    <button type="button" data-start="14" aria-current="false"><time>0:14</time>2 · Difference in means</button>
+    <button type="button" data-start="27" aria-current="false"><time>0:27</time>3 · Standard error and t</button>
+    <button type="button" data-start="42" aria-current="false"><time>0:42</time>4 · What p means</button>
+    <button type="button" data-start="59" aria-current="false"><time>0:59</time>5 · A larger gap</button>
+    <button type="button" data-start="70" aria-current="false"><time>1:10</time>6 · More variability</button>
+    <button type="button" data-start="83" aria-current="false"><time>1:23</time>7 · A larger sample</button>
+    <button type="button" data-start="96" aria-current="false"><time>1:36</time>8 · The confidence interval</button>
+    <button type="button" data-start="112" aria-current="false"><time>1:52</time>9 · The right study design</button>
+  </nav>
+  <details>
+    <summary>Transcript and results</summary>
+    <div class="transcript">
+      <h2>0:00 · A safety-training question</h2>
+      <p>Imagine randomly assigning 40 ground personnel to a standard safety briefing or scenario practice, with 20 workers in each group. Each worker completes one identical simulator task: correctly report a ramp hazard. The outcome is time in seconds. One dot is one worker, and the groups contain different people. The observations are invented for teaching.</p>
+      <h2>0:14 · Difference in means</h2>
+      <p>The practice group averages 42 seconds; the briefing group averages 48 seconds. Briefing minus practice is a positive 6-second difference, favoring practice on this time measure. Individual results overlap. We need to compare the mean difference with its uncertainty.</p>
+      <h2>0:27 · Standard error and t</h2>
+      <p>Each group has an individual sample standard deviation of 8 seconds. The standard error of the difference is √(8²/20 + 8²/20) = 2.53 seconds. The Welch t statistic is the difference divided by its standard error: 6/2.53 = 2.37. SD describes variation among individuals; SE describes uncertainty in the estimated mean difference.</p>
+      <h2>0:42 · What p means</h2>
+      <p>Under equal population means and the model assumptions, about 2.3% of t statistics are at least this far from zero in either direction. The two-sided p-value is .023, with 38 degrees of freedom. At α = .05, reject the equal-means null. The p-value is not the probability that the null hypothesis is true.</p>
+      <h2>0:59 · A larger gap</h2>
+      <p>In a separate constructed illustration, move the practice mean to 36 seconds while holding the briefing mean at 48 seconds, with 20 workers per group and SD = 8 seconds. Doubling the gap to 12 seconds doubles t to 4.74; p &lt; .001.</p>
+      <h2>1:10 · More variability</h2>
+      <p>Return to a 6-second difference and 20 workers per group. Increase the individual SD from 8 to 14 seconds. The standard error increases to 4.43 seconds, t falls to 1.36, and p = .183. This does not establish that the training methods are equivalent.</p>
+      <h2>1:23 · A larger sample</h2>
+      <p>Compare a separately planned study with 80 workers per group, maintaining the 6-second difference and 14-second individual SD. The standard error is halved to 2.21 seconds, t = 2.71, and p = .007. Individual workers have not become less variable. These are separate sample-size illustrations, not a rule to keep adding participants until significance is reached.</p>
+      <h2>1:36 · The confidence interval</h2>
+      <p>Return to the baseline study: the estimated advantage for practice is 6 seconds, with a 95% confidence interval from 0.9 to 11.1 seconds. This is an interval for the population mean difference, not for individual reporting times. Statistical evidence does not by itself determine operational value.</p>
+      <h2>1:52 · The right study design</h2>
+      <p>Different workers in the two groups call for an independent two-sample method such as Welch's test. If the same workers are measured before and after training, consider a paired t-test of their within-person differences. Check independence, the outcome, skew, and outliers. Report the estimated difference, its confidence interval, and practical meaning. Simulator reporting time alone does not establish a reduction in real-world incidents.</p>
+      <table class="results">
+        <thead><tr><th scope="col">Illustration</th><th scope="col">n/group</th><th scope="col">Gap (s)</th><th scope="col">SD (s)</th><th scope="col">t</th><th scope="col">p</th></tr></thead>
+        <tbody><tr><th scope="row">Baseline</th><td>20</td><td>6</td><td>8</td><td>2.37</td><td>.023</td></tr><tr><th scope="row">Larger gap</th><td>20</td><td>12</td><td>8</td><td>4.74</td><td>&lt; .001</td></tr><tr><th scope="row">More scatter</th><td>20</td><td>6</td><td>14</td><td>1.36</td><td>.183</td></tr><tr><th scope="row">Larger sample</th><td>80</td><td>6</td><td>14</td><td>2.71</td><td>.007</td></tr></tbody>
+      </table>
+    </div>
+  </details>
+  <details>
+    <summary>Instructor prompts and method</summary>
+    <div class="note">
+      <p>Pause before each change and ask students to predict its effect on the standard error and t statistic. Ask why overlapping individual times do not rule out different population means. At the interval, ask whether the evidence would meet a prespecified minimum worthwhile improvement of 5 seconds: the interval includes improvements below 5 seconds, so it does not establish that threshold.</p>
+      <p>For this hypothetical study, each participant correctly reports the hazard. In actual research, missed detections, repeated measurements, censoring, and the accuracy–speed tradeoff may require different methods. The data were engineered to exact sample means and standard deviations for illustration. Real studies will not hold those summaries constant across samples.</p>
+      <p>The accompanying classroom package includes instructor notes, baseline CSV data, and SPSS syntax. The SPSS file embeds the data. Read the “Equal variances not assumed” row for the Welch result. Equal sample sizes and SDs make the pooled and Welch results coincide here.</p>
+      <p>Method reference: <a href="https://www.itl.nist.gov/div898/handbook/eda/section3/eda353.htm" target="_blank" rel="noopener noreferrer">NIST/SEMATECH: Two-sample t-test for equal means</a>. All graphics and the scenario were prepared for RSCH 650; no real operational data are used.</p>
+    </div>
+  </details>
+</main>
+<script>
+(()=>{
+  const video=document.getElementById('lesson-video');
+  const status=document.getElementById('chapter-status');
+  const buttons=Array.from(document.querySelectorAll('nav button[data-start]'));
+  const titles=['A safety-training question','Difference in means','Standard error and t','What p means','A larger gap','More variability','A larger sample','The confidence interval','The right study design'];
+  let active=-1;
+  function update(){
+    let index=0;
+    buttons.forEach((button,i)=>{if(video.currentTime>=Number(button.dataset.start))index=i;});
+    if(index===active)return;
+    active=index;
+    buttons.forEach((button,i)=>button.setAttribute('aria-current',String(i===index)));
+    status.textContent=`${index+1} of 9 · ${titles[index]}`;
+  }
+  buttons.forEach(button=>button.addEventListener('click',()=>{
+    video.pause();video.currentTime=Number(button.dataset.start);update();
+  }));
+  video.addEventListener('timeupdate',update);
+  video.addEventListener('loadedmetadata',update);
+  video.addEventListener('seeked',update);
+  update();
+})();
+</script>
+</body>
+</html>
