@@ -33,7 +33,7 @@ The difference is always standard briefing minus scenario practice. All p-values
 
 Baseline 95% confidence interval: **0.878643 to 11.121357 seconds**. A positive value favors scenario practice on this particular time measure. The interval is for the population mean difference, not for individual workers' times.
 
-The statistics were computed directly from the synthetic observations and checked against SciPy's independent-samples t-test with `equal_var=False`. The confidence interval uses the Welch standard error and t critical value. The SPSS syntax was checked against IBM documentation but was not executed in SPSS in this environment.
+The statistics were computed directly from the synthetic observations and checked against SciPy's independent-samples t-test with `equal_var=False`. The confidence interval uses the Welch standard error and t critical value. The independent syntax and the supplementary paired example have now been executed in IBM SPSS Statistics 29.0.2.0. Native t statistics, degrees of freedom, two-sided p-values, and confidence intervals agree with independent calculations; see the [worked example and native output](spss-worked-example/).
 
 The larger-sample and other sensitivity illustrations are separate constructed studies, not additional observations added to the original study until a p-value crosses .05. They hold selected sample summaries fixed to isolate statistical relationships. In actual repeat samples, the observed means and SDs would vary.
 
@@ -64,6 +64,12 @@ The 95% confidence level describes the long-run coverage of the interval procedu
 Open `ramp_hazard_training.sps` and run the full file. It contains its own data, so no local path changes are necessary. Training is coded 1 = standard briefing and 2 = scenario practice. `report_seconds` is the continuous outcome. Read the **Equal variances not assumed** row for the Welch result, using the two-sided p-value and 95% confidence interval. The CSV contains the same 40 baseline observations for use in R, Stata, or SPSS.
 
 Expected report: In this synthetic example, the standard-briefing group had a longer mean reporting time (M = 48.00 s, SD = 8.00) than the scenario-practice group (M = 42.00 s, SD = 8.00). Welch's t(38) = 2.37, p = .023, mean difference = 6.00 s, 95% CI [0.88, 11.12].
+
+## Supplementary SPSS worked examples
+
+The [SPSS lab](spss-worked-example/) walks through the original independent comparison and a separate matched before/after study of 20 synthetic workers. The latter uses one row per worker, two measurements per row, and the within-worker difference before minus after. Its mean reduction is 6.00 s, SD of the differences is 4.5422 s, and SE is 1.0157 s: paired t(19) = 5.9074, p < .001, 95% CI [3.8742, 8.1258].
+
+The examples illustrate different study designs, not a comparison of the effectiveness of their training programs. The uncontrolled before/after example cannot establish a causal training benefit. Ask students why the paired test uses the SD of differences, why the observations within a pair are related, and why a displayed SPSS p-value of .000 should be reported as p < .001 rather than p = 0. The lab includes native output, instructions for reading the correct tables, diagnostic prompts, exercises, and an answer key.
 
 ## Method references
 

@@ -1,0 +1,24 @@
+{
+  "provenance": "Values extracted from genuine native SPSS OMS output, compared with independent references",
+  "absolute_tolerance": 1e-09,
+  "verified": {
+    "independent": {
+      "t": 2.3717082452122,
+      "df": 38.0,
+      "p_two_sided": 0.022875801794508,
+      "ci95_lower": 0.87864284827699,
+      "ci95_upper": 11.121357152023,
+      "mean_difference": 6.00000000015,
+      "se_difference": 2.5298221281063
+    },
+    "paired": {
+      "t": 5.9074494651815,
+      "df": 19.0,
+      "p_two_sided": 1.0934362139395e-05,
+      "ci95_lower": 3.874185060665,
+      "ci95_upper": 8.125814939335,
+      "mean_difference": 6.0,
+      "se_difference": 1.015666750154
+    }
+  }
+}

@@ -1,73 +1,136 @@
+"""Assemble the offline player, captions, editable sources, and teaching ZIP."""
+
+import argparse
+import base64
+import csv
+import json
 from pathlib import Path
-import base64, json, zipfile, csv, shutil, re
-from scipy import stats
+import shutil
+import zipfile
+
 import numpy as np
+from scipy import stats
 
-out=Path('/workspace/scratch/80d5b05515c0/ttest_animation')
-template=(out/'classroom_template.html').read_text()
-video=out/'RSCH650_T_Test_Animation.mp4'
-poster=out/'qa_scene_2.png'
-page=template.replace('__VIDEO_DATA__','data:video/mp4;base64,'+base64.b64encode(video.read_bytes()).decode()).replace('__POSTER_DATA__','data:image/png;base64,'+base64.b64encode(poster.read_bytes()).decode())
-assert '__VIDEO_DATA__' not in page and '__POSTER_DATA__' not in page
-(out/'RSCH650_T_Test_Classroom.html').write_text(page)
 
-timeline=json.loads((out/'timeline.json').read_text())
-def timestamp(sec,sep):
-    return f'{int(sec)//3600:02d}:{int(sec)//60%60:02d}:{int(sec)%60:02d}{sep}000'
-srt='';vtt='WEBVTT\n\n'
-for i,s in enumerate(timeline,1):
-    srt+=f'{i}\n{timestamp(s["start"],",")} --> {timestamp(s["end"],",")}\n{s["caption"]}\n\n'
-    vtt+=f'{timestamp(s["start"],".")} --> {timestamp(s["end"],".")}\n{s["caption"]}\n\n'
-(out/'RSCH650_T_Test_Captions.srt').write_text(srt)
-(out/'RSCH650_T_Test_Captions.vtt').write_text(vtt)
+SOURCE_DIR = Path(__file__).resolve().parent
+PACKAGE_DIR = SOURCE_DIR.parent
+BUNDLE_NAME = "RSCH650_T_Test_Teaching_Package.zip"
+DOCUMENTS = (
+    "README.md", "README.txt", "Instructor_Notes.md", "BUILD.md", "requirements.txt", "REVIEW.md",
+)
+DELIVERABLES = (
+    "RSCH650_T_Test_Classroom.html", "RSCH650_T_Test_Animation.mp4",
+    "ramp_hazard_training.csv", "ramp_hazard_training.sps",
+    "RSCH650_T_Test_Captions.srt", "RSCH650_T_Test_Captions.vtt",
+)
 
-# Confirm the supplied rounded CSV reproduces the displayed baseline result.
-rows=list(csv.DictReader((out/'ramp_hazard_training.csv').open()))
-a=np.array([float(r['report_seconds']) for r in rows if r['training']=='1'])
-b=np.array([float(r['report_seconds']) for r in rows if r['training']=='2'])
-result=stats.ttest_ind(a,b,equal_var=False)
-assert len(a)==len(b)==20
-assert abs(result.statistic-2.371708245126282)<1e-8
-assert abs(result.pvalue-.022875801799123525)<1e-8
-assert abs(a.std(ddof=1)-8)<1e-8 and abs(b.std(ddof=1)-8)<1e-8
 
-# Keep self-contained graphics/code available for future revisions.
-source=out/'source';source.mkdir(exist_ok=True)
-for name in ['build_ttest_assets.py','render_ttest.py','package_ttest.py']:
-    shutil.copyfile(out.parent/name,source/name)
-for name in ['assets.json','timeline.json','classroom_template.html']:
-    shutil.copyfile(out/name,source/name)
+def copy_if_different(source, destination):
+    """Copy a source input while allowing an in-place build."""
+    source, destination = Path(source).resolve(), Path(destination).resolve()
+    if source == destination:
+        return
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, destination)
 
-(out/'README.txt').write_text('''RSCH 650 — The t-test on the airport ramp
 
-Start with RSCH650_T_Test_Classroom.html: open it in a desktop browser.
-It embeds the video and has chapter buttons, a transcript, and teaching prompts.
-The presentation is captioned and has no audio. Duration: 2 minutes 6 seconds.
+def copy_tree(source, destination):
+    if not source.exists():
+        return []
+    paths = []
+    for original in sorted(source.rglob("*")):
+        if original.is_file() and "__pycache__" not in original.parts:
+            relative = original.relative_to(source)
+            copy_if_different(original, destination / relative)
+            paths.append(destination / relative)
+    return paths
 
-RSCH650_T_Test_Animation.mp4 can be inserted into a presentation or course page.
-Instructor_Notes.md provides the scenario, results, assumptions, and discussion prompts.
-ramp_hazard_training.sps contains both SPSS commands and the 40 baseline observations.
-ramp_hazard_training.csv provides the same synthetic data for other software.
-SRT and VTT files contain the on-screen narration captions for LMS use.
 
-All data are invented for teaching. This is not evidence about actual aviation training.
-No internet connection is needed for playback. The method reference links are optional.
+def timestamp(seconds, separator):
+    milliseconds = round(seconds * 1000)
+    hours, remainder = divmod(milliseconds, 3_600_000)
+    minutes, remainder = divmod(remainder, 60_000)
+    seconds, milliseconds = divmod(remainder, 1000)
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}{separator}{milliseconds:03d}"
 
-The source folder contains the editable template, calculated data, and production scripts.
-To rebuild elsewhere, set OUT/out in the Python scripts to your chosen project directory.
-The source scripts require Python with NumPy, SciPy, Matplotlib and Pillow, plus FFmpeg.
-The delivered HTML and MP4 need none of those dependencies.
-''')
-files=['README.txt','RSCH650_T_Test_Classroom.html','RSCH650_T_Test_Animation.mp4','Instructor_Notes.md','ramp_hazard_training.csv','ramp_hazard_training.sps','RSCH650_T_Test_Captions.srt','RSCH650_T_Test_Captions.vtt']
-bundle=out/'RSCH650_T_Test_Teaching_Package.zip'
-with zipfile.ZipFile(bundle,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
-    for name in files:z.write(out/name,name)
-    for p in source.iterdir():z.write(p,'source/'+p.name)
-with zipfile.ZipFile(bundle) as z:assert z.testzip() is None
 
-# Extract scripts for a syntax-only check in Node.
-scripts=re.findall(r'<script>([\s\S]*?)</script>',page)
-(out/'qa_player.js').write_text('\n'.join(scripts))
-print('Baseline CSV verified against the animation.')
-for p in [video,out/'RSCH650_T_Test_Classroom.html',bundle]:
-    print(f'{p.name}: {p.stat().st_size:,} bytes')
+def verify_baseline(csv_path):
+    # Confirm the rounded, exported CSV reproduces the displayed result.
+    with csv_path.open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    a = np.array([float(row["report_seconds"]) for row in rows if row["training"] == "1"])
+    b = np.array([float(row["report_seconds"]) for row in rows if row["training"] == "2"])
+    result = stats.ttest_ind(a, b, equal_var=False)
+    assert len(a) == len(b) == 20
+    assert abs(result.statistic - 2.371708245126282) < 1e-8
+    assert abs(result.pvalue - .022875801799123525) < 1e-8
+    assert abs(a.std(ddof=1) - 8) < 1e-8 and abs(b.std(ddof=1) - 8) < 1e-8
+
+
+def package(output_dir):
+    out = Path(output_dir).expanduser().resolve()
+    out.mkdir(parents=True, exist_ok=True)
+    video = out / "RSCH650_T_Test_Animation.mp4"
+    poster = out / "poster.png"
+    for needed in [video, poster, out / "source" / "assets.json", out / "source" / "timeline.json",
+                   out / "ramp_hazard_training.csv", out / "ramp_hazard_training.sps"]:
+        if not needed.is_file():
+            raise FileNotFoundError(f"Missing build output: {needed}. Run source/build.py first.")
+
+    template = (SOURCE_DIR / "classroom_template.html").read_text(encoding="utf-8")
+    page = template.replace(
+        "__VIDEO_DATA__", "data:video/mp4;base64," + base64.b64encode(video.read_bytes()).decode("ascii")
+    ).replace(
+        "__POSTER_DATA__", "data:image/png;base64," + base64.b64encode(poster.read_bytes()).decode("ascii")
+    )
+    assert "__VIDEO_DATA__" not in page and "__POSTER_DATA__" not in page
+    (out / "RSCH650_T_Test_Classroom.html").write_text(page, encoding="utf-8", newline="\n")
+
+    timeline = json.loads((out / "source" / "timeline.json").read_text(encoding="utf-8"))
+    srt, vtt = [], ["WEBVTT\n\n"]
+    for index, scene in enumerate(timeline, 1):
+        srt.append(f'{index}\n{timestamp(scene["start"], ",")} --> '
+                   f'{timestamp(scene["end"], ",")}\n{scene["caption"]}\n\n')
+        vtt.append(f'{timestamp(scene["start"], ".")} --> '
+                   f'{timestamp(scene["end"], ".")}\n{scene["caption"]}\n\n')
+    (out / "RSCH650_T_Test_Captions.srt").write_text("".join(srt), encoding="utf-8", newline="\n")
+    (out / "RSCH650_T_Test_Captions.vtt").write_text("".join(vtt), encoding="utf-8", newline="\n")
+    verify_baseline(out / "ramp_hazard_training.csv")
+
+    # Source inputs are always read beside this script, never from the working directory.
+    source_out = out / "source"
+    for original in sorted(SOURCE_DIR.glob("*.py")):
+        copy_if_different(original, source_out / original.name)
+    copy_if_different(SOURCE_DIR / "classroom_template.html", source_out / "classroom_template.html")
+    for name in DOCUMENTS:
+        copy_if_different(PACKAGE_DIR / name, out / name)
+    tree_files = []
+    for folder in ["spss-worked-example", "review", "tests"]:
+        tree_files.extend(copy_tree(PACKAGE_DIR / folder, out / folder))
+
+    files = [out / name for name in (*DOCUMENTS, *DELIVERABLES)]
+    files.extend(sorted(path for path in source_out.iterdir() if path.is_file()
+                        and path.suffix in {".py", ".json", ".html"}))
+    files.extend(tree_files)
+    bundle = out / BUNDLE_NAME
+    with zipfile.ZipFile(bundle, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
+        for path in sorted(set(files)):
+            archive.write(path, path.relative_to(out).as_posix())
+    with zipfile.ZipFile(bundle) as archive:
+        assert archive.testzip() is None
+    print("Baseline CSV verified against the animation.")
+    for path in [video, out / "RSCH650_T_Test_Classroom.html", bundle]:
+        print(f"{path}: {path.stat().st_size:,} bytes")
+    return bundle
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output-dir", type=Path, default=PACKAGE_DIR,
+                        help="Directory holding rendered outputs (default: package directory).")
+    args = parser.parse_args()
+    package(args.output_dir)
+
+
+if __name__ == "__main__":
+    main()

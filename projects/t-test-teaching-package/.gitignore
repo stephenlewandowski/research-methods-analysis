@@ -1,0 +1,9 @@
+# Rebuild intermediates and downloadable bundle; delivered media remain tracked.
+/poster.png
+/qa_*.png
+/qa_*.js
+/RSCH650_T_Test_Teaching_Package.zip
+/build/
+/.build/
+/.build-cache/
+/.venv/

@@ -1,22 +1,32 @@
 # Quality review
 
-Reviewed 16 October 2026. Scope: the package as supplied from ChatGPT Work, without altering its original files.
+Initial review: 16 October 2026, covering the package as supplied from ChatGPT Work in [commit 8859fe6](https://github.com/stephenlewandowski/research-methods-analysis/commit/8859fe6d792650d1f9c4d1c67dc6ee9b716e8603).
+
+## Resolution status
+
+The two medium-priority findings below are resolved in the revised edition:
+
+- **Chapter 7:** all 80 observations per group are plotted at their actual values from the first frame. The old-data crossfade and horizontal compression have been removed. Regression tests compare the rendered observations with the displayed sample size and statistics at the chapter start and during the scene. See the [corrected frame at 1:23](review/chapter-7-corrected.png).
+- **Rebuild:** scripts resolve inputs relative to their own source directory and accept `--output-dir`. [BUILD.md](BUILD.md), pinned requirements, and `source/build.py` provide the complete generation, preview/poster, encoding, and packaging sequence.
+- **SPSS worked example:** the [new lab](spss-worked-example/) develops independent and paired analyses. Both syntax files have run successfully in native IBM SPSS Statistics 29.0.2.0, with genuine output snapshots and numerical comparisons against independently computed references. The final video checklist now refers to independent workers/pairs and the relevant groups/differences.
+
+The following findings and screenshots document the **original edition**. Original-source links refer to the import commit; the chapter-7 screenshots are retained as historical evidence, not images of the corrected video.
 
 ## Overall assessment
 
 This is a useful instructor-led introduction to the independent two-sample t-test. Its completed-scene calculations, interpretation, synthetic-data labeling, and supporting teaching notes are strong. The graphics are coherent and readable at their intended desktop presentation size. It is a narrated-by-the-instructor video lesson, with chapter navigation rather than adjustable simulation parameters.
 
-Two issues should be addressed before treating it as a polished, reproducible release: chapter 7 temporarily displays statistics that do not describe the points on screen, and the documented rebuild procedure does not match the delivered source layout. Neither changes the verified calculations for the completed examples.
+The original edition had two issues: chapter 7 temporarily displayed statistics that did not describe the points on screen, and the documented rebuild procedure did not match the delivered source layout. Both are corrected as described above. Neither changed the verified calculations for the completed examples.
 
 ## Findings
 
-### 1. Medium: chapter 7 pauses on inconsistent points and statistics
+### 1. Resolved: chapter 7 paused on inconsistent points and statistics
 
 At **1:23.000**, the larger-sample chapter shows the old **20 observations per group**, but its labels already say **80 per group**, SE = **2.21**, t = **2.71**, and p = **.007**. The visible old observations instead have SE = **4.43**, t = **1.36**, and p = **.183**. This is especially noticeable because the chapter button deliberately pauses at that exact time.
 
-The renderer immediately returns the final 80-person scenario in [render_ttest.py](source/render_ttest.py#L86), while [the scatter transition](source/render_ttest.py#L113) initially gives the old observations full opacity and the new observations zero opacity. During the transition, the new observations are also horizontally compressed while the displayed statistics use the uncompressed final data. The completed display after approximately 2.4 seconds is correct.
+The original renderer immediately returns the final 80-person scenario in [render_ttest.py](https://github.com/stephenlewandowski/research-methods-analysis/blob/8859fe6d792650d1f9c4d1c67dc6ee9b716e8603/projects/t-test-teaching-package/source/render_ttest.py#L86), while [the scatter transition](https://github.com/stephenlewandowski/research-methods-analysis/blob/8859fe6d792650d1f9c4d1c67dc6ee9b716e8603/projects/t-test-teaching-package/source/render_ttest.py#L113) initially gives the old observations full opacity and the new observations zero opacity. During the transition, the new observations are also horizontally compressed while the displayed statistics use the uncompressed final data. The original completed display after approximately 2.4 seconds is correct.
 
-Recommended correction: keep the points, sample-size labels, and statistics synchronized, or explicitly label the transition and suppress final statistics until the final observations are displayed. A temporary classroom workaround is to advance to **1:26** before discussing the larger-sample result.
+The correction keeps the complete new observations, sample-size labels, and statistics synchronized from **1:23**. Advancing to 1:26 is no longer necessary in the revised video.
 
 At 1:23:
 
@@ -26,25 +36,25 @@ At 1:26:
 
 ![Chapter 7 after the transition, with 80 points per group and matching statistics](review/chapter-7-settled.png)
 
-### 2. Medium: the supplied rebuild instructions are incomplete
+### 2. Resolved: the supplied rebuild instructions were incomplete
 
-[README.txt](README.txt#L17) says to change `OUT/out` to rebuild elsewhere. That does not resolve the source-layout assumptions. The packaging script reads the template from [the output root](source/package_ttest.py#L7), but the delivered template is in `source/`. It then tries to copy production scripts from [the output directory's parent](source/package_ttest.py#L37), whereas the supplied scripts also live in `source/`.
+[The original README](https://github.com/stephenlewandowski/research-methods-analysis/blob/8859fe6d792650d1f9c4d1c67dc6ee9b716e8603/projects/t-test-teaching-package/README.txt#L17) says to change `OUT/out` to rebuild elsewhere. That does not resolve the original source-layout assumptions. The original packaging script reads the template from [the output root](https://github.com/stephenlewandowski/research-methods-analysis/blob/8859fe6d792650d1f9c4d1c67dc6ee9b716e8603/projects/t-test-teaching-package/source/package_ttest.py#L7), but the delivered template is in `source/`. It then tries to copy production scripts from [the output directory's parent](https://github.com/stephenlewandowski/research-methods-analysis/blob/8859fe6d792650d1f9c4d1c67dc6ee9b716e8603/projects/t-test-teaching-package/source/package_ttest.py#L37), whereas the supplied scripts also live in `source/`.
 
 Changing the output path alone therefore leaves missing-input paths or a same-file copy problem, depending on the chosen layout. The package also lacks an executable build-order guide and a dependency/version file. This finding follows from inspecting the paths and file layout; the production pipeline was not executed or rebuilt during this review.
 
 Recommended correction: resolve source inputs relative to each script's `__file__`, accept a separate output directory, use explicit UTF-8 encodings, and document the asset-generation, preview/poster, encoding, and packaging order with tested dependency versions and FFmpeg availability.
 
-### 3. Lower priority: clarify the paired-design scope and independence checklist
+### 3. Addressed: paired-design scope and independence checklist
 
-The final scene correctly distinguishes independent groups from repeated measurements of the same workers. However, it is a conceptual comparison: there is no paired dataset, worked paired statistic, paired confidence interval, or paired SPSS analysis. If the learning objective is to teach both tests, add a short before/after example centered on within-worker differences.
+The original final scene correctly distinguishes independent groups from repeated measurements of the same workers but provides a conceptual comparison only. The new [SPSS lab](spss-worked-example/) now supplies a separate paired dataset, a worked paired statistic and confidence interval, and native-validated SPSS analysis centered on within-worker differences.
 
-The final screen's [checklist](source/render_ttest.py#L238) says “Independent observations” next to both designs. For paired data, independence concerns workers or pairs; the two observations within a worker are related by design. Wording such as “Independent workers/pairs; inspect paired differences when applicable” would be more precise.
+The original final screen's [checklist](https://github.com/stephenlewandowski/research-methods-analysis/blob/8859fe6d792650d1f9c4d1c67dc6ee9b716e8603/projects/t-test-teaching-package/source/render_ttest.py#L238) says “Independent observations” next to both designs. The revised checklist specifies independent workers/pairs and inspection of groups/differences, with skew/outlier checks. Within-worker observations remain related by design.
 
 ### 4. Lower priority: captions and lesson content could be easier to maintain
 
-The burned-in captions, full text transcript, keyboard-accessible chapter controls, focus indicators, and chapter announcements are useful. The [video element](source/classroom_template.html#L45) has no selectable caption track, although a VTT file is supplied. An optional selectable or scalable text layer would improve learner control; avoid overlaying duplicate text on the burned-in captions.
+The burned-in captions, full text transcript, keyboard-accessible chapter controls, focus indicators, and chapter announcements are useful. The [video element](source/classroom_template.html#L45) has no selectable caption track, although a VTT file is supplied. An optional selectable or scalable text layer would improve learner control; avoid overlaying duplicate text on the burned-in captions. This optional enhancement remains open.
 
-Scene timing and content are repeated in Python, the timeline, captions, and [the HTML navigation/transcript](source/classroom_template.html#L54). These are consistent in the current package, but revising one source will not automatically update all the others. Generate them from a shared lesson definition or add checks that detect drift.
+Scene timing and content are repeated in Python, the timeline, captions, and [the HTML navigation/transcript](source/classroom_template.html#L54). New regression checks detect timeline, chapter-start, and caption drift. The transcript and results prose still need editorial review when scene content changes.
 
 ## What works well
 
@@ -56,7 +66,7 @@ Scene timing and content are repeated in Python, the timeline, captions, and [th
 - Notes address independence, skew/outliers, missed detections, censoring, accuracy-speed tradeoffs, random assignment, and limits to generalization.
 - The offline HTML contains the actual video and poster. There is no playback dependency on a CDN or remote data service.
 
-## Verification
+## Initial verification record
 
 ### Statistical and data checks
 
@@ -71,7 +81,7 @@ All four asset scenarios were independently recalculated from their stored obser
 
 The independent results agree with the stored SE, t, df, and p within 1e-12 and confidence bounds within 1e-10. CSV and SPSS data agree exactly row-for-row: 40 observations, 40 unique worker IDs, and 20 per group. CSV rounding differs from the full-precision assets by at most 4.98e-10 seconds. All 551 stored reference-density points agree with the t(38) density, and observations remain inside the common 0–90 second plotting domain.
 
-The supplied SPSS command structure matches the documented `T-TEST` subcommands. **SPSS itself was not run**, so execution and output in a native SPSS installation remain unverified. The supplied analysis covers independent groups only.
+At the initial review, the command structure matched the documented `T-TEST` subcommands but SPSS itself was not run. The follow-up revision now includes native SPSS 29 execution of both independent and paired analyses, genuine output snapshots, and an automated comparison with independently calculated references. See the [worked example](spss-worked-example/) and [native validation instructions](BUILD.md).
 
 ### Media and player checks
 

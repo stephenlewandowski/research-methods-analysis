@@ -1,0 +1,6 @@
+# Rebuild dependencies. Python and the FFmpeg executable are installed separately.
+# Tested with Python 3.12.14 and FFmpeg 9.0.1 on Windows.
+numpy==2.5.4
+scipy==1.18.1
+matplotlib==3.11.2
+Pillow==12.3.0

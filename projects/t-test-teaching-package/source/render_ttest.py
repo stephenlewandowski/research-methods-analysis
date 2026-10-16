@@ -1,5 +1,5 @@
 from pathlib import Path
-import json, math, textwrap, subprocess, csv
+import argparse, json, math, textwrap, subprocess, shutil
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -8,9 +8,10 @@ from scipy.stats import t as tdist
 from PIL import Image
 from matplotlib.font_manager import FontProperties
 
-OUT=Path('/workspace/scratch/80d5b05515c0/ttest_animation')
-ASSETS=json.loads((OUT/'assets.json').read_text())
-S=ASSETS['scenarios']
+SOURCE_DIR=Path(__file__).resolve().parent
+OUT=SOURCE_DIR.parent
+ASSETS={}
+S={}
 BG='#F6F8FA'; INK='#182F43'; MUTED='#526878'; GRID='#D5DEE5'
 BLUE='#216A9A'; AMBER='#AE570D'; BLUE_LIGHT='#D9EAF5'; ACCENT='#247C72'
 W,H,FPS=1280,720,15
@@ -35,7 +36,17 @@ caption='The estimated advantage is 6 seconds, with a 95% confidence interval fr
 dict(start=112,end=126,key='baseline',title='Match the test to the study design',subtitle='Independent groups here · A paired test answers a different design',
 caption='Different workers in each group: use a two-sample t-test. The same workers before and after training: consider a paired t-test. Check assumptions first.',note='Simulator performance is not an incident rate'),
 ]
-(OUT/'timeline.json').write_text(json.dumps(SCENES,indent=2))
+
+def configure(output_dir):
+    global OUT,ASSETS,S
+    OUT=Path(output_dir).expanduser().resolve()
+    OUT.mkdir(parents=True,exist_ok=True)
+    assets_path=OUT/'source'/'assets.json'
+    if not assets_path.is_file():assets_path=OUT/'assets.json'
+    if not assets_path.is_file():
+        raise FileNotFoundError(f'Missing {assets_path}; run build_ttest_assets.py --output-dir "{OUT}" first.')
+    ASSETS=json.loads(assets_path.read_text(encoding='utf-8'))
+    S=ASSETS['scenarios']
 
 plt.rcParams.update({'font.family':'DejaVu Sans','font.size':14,'text.color':INK,'axes.labelcolor':INK,'xtick.color':MUTED,'ytick.color':MUTED,'axes.edgecolor':GRID,'savefig.facecolor':BG})
 fig=plt.figure(figsize=(W/100,H/100),dpi=100,facecolor=BG)
@@ -81,9 +92,7 @@ def data_at(idx,u):
     key=SCENES[idx]['key']; target=S[key]
     if idx==4:source=S['baseline']
     elif idx==5:source=S['baseline']
-    elif idx==6:source=S['scatter']
     else:return target
-    if idx==6:return target
     d=dict(target)
     for k in ['a','b']:d[k]=(np.array(source[k])*(1-u)+np.array(target[k])*u).tolist()
     for k in ['meanA','meanB','gap','sd','se','t']:d[k]=source[k]*(1-u)+target[k]*u
@@ -110,13 +119,9 @@ def dot_plot(idx,u,d):
     n=d['n']
     for k,mean,col,y,marker in [('a',d['meanA'],BLUE,1.3,'o'),('b',d['meanB'],AMBER,0,'s')]:
         vals=np.array(d[k]);ys=swarm(vals,y)
-        if idx==6 and u<1:
-            old=np.array(S['scatter'][k]);oldy=swarm(old,y)
-            ax.scatter(old,oldy,s=47,marker=marker,color=col,alpha=1-u,zorder=3)
-            # New workers move into the planned larger sample as the old view leaves.
-            vals=mean+(vals-mean)*(.85+.15*u)
-            ax.scatter(vals,ys,s=31,marker=marker,color=col,alpha=u,zorder=3)
-        else:ax.scatter(vals,ys,s=47 if n==20 else 31,marker=marker,color=col,zorder=3)
+        # A new planned study starts with its complete observations and matching
+        # statistics, including when the chapter button pauses on its first frame.
+        ax.scatter(vals,ys,s=47 if n==20 else 31,marker=marker,color=col,zorder=3)
         if idx>=1:
             length=.35*(u if idx==1 else 1)
             ax.plot([mean,mean],[y-length,y+length],color=col,linewidth=3.4,zorder=4)
@@ -223,7 +228,7 @@ def draw(idx,elapsed):
         text(.755,.35,'H₀: μbriefing = μpractice',15)
         text(.755,.29,'At α = .05:\nreject equal means.',17)
     elif idx in [4,5,6]:
-        # Numbers describe the plot state; the larger-n transition is labeled explicitly.
+        # Numbers describe the observations on screen, including chapter starts.
         metric(.71,'MEAN DIFFERENCE',f"{d['gap']:.1f} seconds",f"n = {d['n']} per group")
         metric(.54,'STANDARD ERROR',f"{d['se']:.2f} seconds",f"Individual SD = {d['sd']:.0f} s")
         text(.755,.365,f"t = {d['t']:.2f}",27)
@@ -235,7 +240,7 @@ def draw(idx,elapsed):
         text(.755,.29,'Statistical evidence\n≠ operational value',17)
     else:
         text(.755,.71,'BEFORE USING THE TEST',13,MUTED)
-        text(.755,.65,'Independent observations\nContinuous outcome\nCheck skew and outliers',16,linespacing=1.7)
+        text(.755,.65,'Independent workers / pairs\nContinuous outcome\nInspect groups / differences\nCheck skew and outliers',14,linespacing=1.6)
         text(.755,.42,'AFTER THE TEST',13,MUTED)
         text(.755,.36,'Report the difference,\nconfidence interval,\nand practical meaning.',17,linespacing=1.5)
     text(.05,.145,caption_wrap(sc['caption']),17,linespacing=1.5)
@@ -251,6 +256,7 @@ def previews():
     paths=[]
     for i,sc in enumerate(SCENES):
         path=OUT/f'qa_scene_{i+1}.png';Image.fromarray(draw(i,4)).save(path);paths.append(path)
+    Image.open(paths[1]).save(OUT/'poster.png')
     sheet=Image.new('RGB',(1280,3*360),BG)
     for i,path in enumerate(paths[:6]):sheet.paste(Image.open(path).resize((640,360)),((i%2)*640,(i//2)*360))
     sheet.save(OUT/'qa_contact_sheet.png')
@@ -258,8 +264,10 @@ def previews():
     for j,i in enumerate([6,7,8]):sheet2.paste(Image.open(paths[i]).resize((640,360)),((j%2)*640,(j//2)*360))
     sheet2.save(OUT/'qa_contact_sheet_2.png')
 
-def encode():
-    cmd=['ffmpeg','-y','-loglevel','error','-f','rawvideo','-vcodec','rawvideo','-s',f'{W}x{H}','-pix_fmt','rgb24','-r',str(FPS),'-i','-','-an','-c:v','libx264','-preset','fast','-crf','21','-pix_fmt','yuv420p','-movflags','+faststart',str(OUT/'RSCH650_T_Test_Animation.mp4')]
+def encode(ffmpeg='ffmpeg'):
+    executable=shutil.which(str(ffmpeg))
+    if executable is None:raise FileNotFoundError('FFmpeg was not found. Install it on PATH or supply --ffmpeg PATH.')
+    cmd=[executable,'-y','-loglevel','error','-f','rawvideo','-vcodec','rawvideo','-s',f'{W}x{H}','-pix_fmt','rgb24','-r',str(FPS),'-i','-','-an','-c:v','libx264','-preset','fast','-crf','21','-pix_fmt','yuv420p','-movflags','+faststart',str(OUT/'RSCH650_T_Test_Animation.mp4')]
     proc=subprocess.Popen(cmd,stdin=subprocess.PIPE)
     for idx,sc in enumerate(SCENES):
         duration=sc['end']-sc['start'];cache={}
@@ -275,6 +283,13 @@ def encode():
     print('Video complete',flush=True)
 
 if __name__=='__main__':
-    import sys
-    if '--encode' in sys.argv:encode()
+    parser=argparse.ArgumentParser(description='Render the RSCH650 t-test lesson previews or 126-second video.')
+    parser.add_argument('--output-dir',type=Path,default=SOURCE_DIR.parent)
+    parser.add_argument('--ffmpeg',default='ffmpeg',help='FFmpeg executable name or path')
+    parser.add_argument('--encode',action='store_true',help='Encode the video instead of writing previews')
+    args=parser.parse_args()
+    configure(args.output_dir)
+    (OUT/'source').mkdir(parents=True,exist_ok=True)
+    (OUT/'source'/'timeline.json').write_text(json.dumps(SCENES,indent=2)+'\n',encoding='utf-8',newline='\n')
+    if args.encode:encode(args.ffmpeg)
     else:previews();print('Previews ready')

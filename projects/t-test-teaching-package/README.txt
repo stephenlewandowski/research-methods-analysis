@@ -1,19 +1,24 @@
 RSCH 650 — The t-test on the airport ramp
 
-Start with RSCH650_T_Test_Classroom.html: open it in a desktop browser.
-It embeds the video and has chapter buttons, a transcript, and teaching prompts.
-The presentation is captioned and has no audio. Duration: 2 minutes 6 seconds.
+Open RSCH650_T_Test_Classroom.html in a desktop browser for offline playback,
+chapter navigation, a text transcript, results, and instructor prompts.
+The captioned animation lasts 2 minutes 6 seconds and has no audio.
+The independent MP4 can also be used in presentations or course pages.
 
-RSCH650_T_Test_Animation.mp4 can be inserted into a presentation or course page.
-Instructor_Notes.md provides the scenario, results, assumptions, and discussion prompts.
-ramp_hazard_training.sps contains both SPSS commands and the 40 baseline observations.
-ramp_hazard_training.csv provides the same synthetic data for other software.
-SRT and VTT files contain the on-screen narration captions for LMS use.
+Instructor_Notes.md covers the scenario, assumptions, numerical results, and
+classroom discussion. All observations are synthetic teaching data.
 
-All data are invented for teaching. This is not evidence about actual aviation training.
-No internet connection is needed for playback. The method reference links are optional.
+For guided independent and paired analyses, open spss-worked-example/README.md.
+The original ramp_hazard_training.sps embeds 40 independent-group observations.
+The new paired example uses its own before/after data for 20 matched workers.
+Both syntax files have been executed in IBM SPSS Statistics 29.0.2.0; genuine
+native output and independently calculated reference results are included.
 
-The source folder contains the editable template, calculated data, and production scripts.
-To rebuild elsewhere, set OUT/out in the Python scripts to your chosen project directory.
-The source scripts require Python with NumPy, SciPy, Matplotlib and Pillow, plus FFmpeg.
-The delivered HTML and MP4 need none of those dependencies.
+Chapter 7 now shows its complete 80-per-group study from its first frame.
+REVIEW.md retains the original audit findings and records their resolution.
+
+BUILD.md documents dependency setup and the complete portable rebuild.
+With Python dependencies from requirements.txt and FFmpeg installed, run:
+    python source/build.py
+Use --output-dir "build/classroom copy" for a separate destination.
+No editing of hard-coded paths is required. Playback needs no build tools.

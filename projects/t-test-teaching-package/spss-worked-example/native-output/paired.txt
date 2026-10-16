@@ -1,0 +1,237 @@
+﻿Notes
+
+ Output Created                               16-OCT-2026 10:03:50              
+ Comments                                                                       
+ Input         Active Dataset                 RampPaired                        
+               Filter                         <none>                            
+               Weight                         <none>                            
+               Split File                     <none>                            
+               N of Rows in Working Data File 20                                
+ Missing Value Definition of Missing          User defined missing values are   
+ Handling                                     treated as missing.               
+               Cases Used                     All non-missing data are used.    
+ Syntax                                       DESCRIPTIVES                      
+                                              VARIABLES=before_seconds          
+                                              after_seconds reduction_seconds   
+                                                                                
+                                              /STATISTICS=MEAN STDDEV MIN MAX.  
+                                                                                
+ Resources     Processor Time                 00:00:00.00                       
+               Elapsed Time                   00:00:00.00                       
+
+Descriptive Statistics
+
+                                      N  Minimum Maximum Mean    Std. Deviation 
+ Before practice: correct             20 35.00   62.00   48.0000 7.87401        
+ hazard-reporting time (seconds)                                                
+ After practice: correct              20 29.00   56.00   42.0000 8.54708        
+ hazard-reporting time (seconds)                                                
+ Before minus after reporting time    20 -2.00   14.00   6.0000  4.54220        
+ (seconds)                                                                      
+ Valid N (listwise)                   20                                        
+
+Notes
+
+ Output Created                               16-OCT-2026 10:03:50              
+ Comments                                                                       
+ Input         Active Dataset                 RampPaired                        
+               Filter                         <none>                            
+               Weight                         <none>                            
+               Split File                     <none>                            
+               N of Rows in Working Data File 20                                
+ Missing Value Definition of Missing          User-defined missing values for   
+ Handling                                     dependent variables are treated   
+                                              as missing.                       
+               Cases Used                     Statistics are based on cases     
+                                              with no missing values for any    
+                                              dependent variable or factor      
+                                              used.                             
+ Syntax                                       EXAMINE                           
+                                              VARIABLES=reduction_seconds       
+                                                                                
+                                              /PLOT=BOXPLOT HISTOGRAM NPPLOT    
+                                                                                
+                                              /STATISTICS=DESCRIPTIVES          
+                                                                                
+                                              /CINTERVAL=95                     
+                                               /MISSING=LISTWISE                
+                                               /NOTOTAL.                        
+                                                                                
+ Resources     Processor Time                 00:00:01.33                       
+               Elapsed Time                   00:00:00.55                       
+
+Case Processing Summary
+
+                                             Cases                           
+                                             Valid      Missing   Total      
+                                             N  Percent N Percent N  Percent 
+ Before minus after reporting time (seconds) 20 100.0%  0 .0%     20 100.0%  
+
+Descriptives
+
+                                         Statistic Std. Error 
+ Before    Mean                          6.0000    1.01567    
+ minus     95% Confidence    Lower Bound 3.8742               
+ after     Interval for Mean Upper Bound 8.1258               
+ reporting 5% Trimmed Mean               6.0000               
+ time      Median                        6.5000               
+ (seconds) Variance                      20.632               
+           Std. Deviation                4.54220              
+           Minimum                       -2.00                
+           Maximum                       14.00                
+           Range                         16.00                
+           Interquartile Range           7.50                 
+           Skewness                      -.157     .512       
+           Kurtosis                      -.907     .992       
+
+Tests of Normality
+
+                                        Kolmogorov-Smirnov(a) Shapiro-Wilk      
+                                        Statistic  df Sig.    Statistic df Sig. 
+ Before minus after reporting time      .120       20 .200(*) .973      20 .812 
+ (seconds)                                                                      
+* This is a lower bound of the true significance.
+a Lilliefors Significance Correction
+
+Notes
+
+ Output Created                               16-OCT-2026 10:03:50              
+ Comments                                                                       
+ Input         Active Dataset                 RampPaired                        
+               Filter                         <none>                            
+               Weight                         <none>                            
+               Split File                     <none>                            
+               N of Rows in Working Data File 20                                
+ Missing Value Definition of Missing          User defined missing values are   
+ Handling                                     treated as missing.               
+               Cases Used                     Statistics for each analysis are  
+                                              based on the cases with no        
+                                              missing or out-of-range data for  
+                                              any variable in the analysis.     
+ Syntax                                       T-TEST PAIRS=before_seconds WITH  
+                                              after_seconds (PAIRED)            
+                                                                                
+                                              /CRITERIA=CI(.95)                 
+                                                                                
+                                              /MISSING=ANALYSIS.                
+                                                                                
+ Resources     Processor Time                 00:00:00.03                       
+               Elapsed Time                   00:00:00.01                       
+
+Paired Samples Statistics
+
+                                      Mean    N  Std. Deviation Std. Error Mean 
+ Pair Before practice: correct        48.0000 20 7.87401        1.76068         
+ 1    hazard-reporting time (seconds)                                           
+      After practice: correct         42.0000 20 8.54708        1.91119         
+      hazard-reporting time (seconds)                                           
+
+Paired Samples Correlations
+
+                                         N  Correlation Significance            
+                                                        One-Sided p Two-Sided p 
+ Pair 1 Before practice: correct         20 .850        .000        .000        
+        hazard-reporting time (seconds)                                         
+        & After practice: correct                                               
+        hazard-reporting time (seconds)                                         
+
+Paired Samples Test
+
+                Paired Differences                      t     df Significance   
+                Mean    Std.    Std.    95% Confidence           One-Sid Two-Si 
+                        Deviati Error   Interval of the                         
+                        on      Mean    Difference                              
+                                        Lower   Upper            ed p    ded p  
+ Pair 1 Before  6.00000 4.54220 1.01567 3.87419 8.12581 5.907 19 .000    .000   
+        practic                                                                 
+        e:                                                                      
+        correct                                                                 
+        hazard-                                                                 
+        reporti                                                                 
+        ng time                                                                 
+        (second                                                                 
+        s) -                                                                    
+        After                                                                   
+        practic                                                                 
+        e:                                                                      
+        correct                                                                 
+        hazard-                                                                 
+        reporti                                                                 
+        ng time                                                                 
+        (second                                                                 
+        s)                                                                      
+
+Paired Samples Effect Sizes
+
+                               Standardizer(a) Point    95% Confidence Interval 
+                                               Estimate Lower             Upper 
+ Pair Before       Cohen's d   4.54220         1.321    .707              1.917 
+ 1    practice:                                                                 
+      correct                                                                   
+      hazard-repor                                                              
+      ting time                                                                 
+      (seconds) -                                                               
+      After                                                                     
+      practice:                                                                 
+      correct                                                                   
+      hazard-repor                                                              
+      ting time    Hedges'     4.73190         1.268    .678              1.840 
+      (seconds)    correction                                                   
+a The denominator used in estimating the effect sizes. \nCohen's d uses the sample standard deviation of the mean difference. \nHedges' correction uses the sample standard deviation of the mean difference, plus a correction factor.
+
+Notes
+
+ Output Created                               16-OCT-2026 10:03:50              
+ Comments                                                                       
+ Input         Active Dataset                 RampPaired                        
+               Filter                         <none>                            
+               Weight                         <none>                            
+               Split File                     <none>                            
+               N of Rows in Working Data File 20                                
+ Missing Value Definition of Missing          User defined missing values are   
+ Handling                                     treated as missing.               
+               Cases Used                     Statistics for each analysis are  
+                                              based on the cases with no        
+                                              missing or out-of-range data for  
+                                              any variable in the analysis.     
+ Syntax                                       T-TEST                            
+                                               /TESTVAL=0                       
+                                                                                
+                                              /VARIABLES=reduction_seconds      
+                                                                                
+                                              /CRITERIA=CI(.95)                 
+                                                                                
+                                              /MISSING=ANALYSIS.                
+                                                                                
+ Resources     Processor Time                 00:00:00.00                       
+               Elapsed Time                   00:00:00.01                       
+
+One-Sample Statistics
+
+                                       N  Mean   Std. Deviation Std. Error Mean 
+ Before minus after reporting time     20 6.0000 4.54220        1.01567         
+ (seconds)                                                                      
+
+One-Sample Test
+
+             Test Value = 0                                                     
+             t     df Significance            Mean       95% Confidence         
+                                              Difference Interval of the        
+                                                         Difference             
+                      One-Sided p Two-Sided p            Lower           Upper  
+ Before      5.907 19 .000        .000        6.00000    3.8742          8.1258 
+ minus after                                                                    
+ reporting                                                                      
+ time                                                                           
+ (seconds)                                                                      
+
+One-Sample Effect Sizes
+
+                               Standardizer(a) Point    95% Confidence Interval 
+                                               Estimate Lower             Upper 
+ Before minus   Cohen's d      4.54220         1.321    .707              1.917 
+ after                                                                          
+ reporting time Hedges'        4.73190         1.268    .678              1.840 
+ (seconds)      correction                                                      
+a The denominator used in estimating the effect sizes. \nCohen's d uses the sample standard deviation. \nHedges' correction uses the sample standard deviation, plus a correction factor.
+

@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "provenance": "Independent standard-library calculations; not native SPSS output",
+  "units": "seconds",
+  "independent": {
+    "source": "../ramp_hazard_training.csv",
+    "difference_order": "standard_briefing_minus_scenario_practice",
+    "standard_briefing": {
+      "n": 20,
+      "mean": 48.0000000001,
+      "sd": 8.000000000010584,
+      "sem": 1.7888543820021983,
+      "min": 32.492043991,
+      "max": 64.718440458
+    },
+    "scenario_practice": {
+      "n": 20,
+      "mean": 41.99999999995,
+      "sd": 7.999999999809708,
+      "sem": 1.788854381957281,
+      "min": 31.29276701,
+      "max": 61.844849203
+    },
+    "welch": {
+      "mean_difference": 6.000000000150003,
+      "se_difference": 2.529822128106289,
+      "t": 2.3717082452122167,
+      "df": 37.99999999999999,
+      "p_two_sided": 0.022875801794508367,
+      "ci95_lower": 0.8786428482762751,
+      "ci95_upper": 11.12135715202373
+    }
+  },
+  "paired": {
+    "source": "ramp_hazard_paired.csv",
+    "complete_pairs": 20,
+    "difference_order": "before_minus_after",
+    "before": {
+      "n": 20,
+      "mean": 48.0,
+      "sd": 7.874007874011811,
+      "sem": 1.760681686165901,
+      "min": 35.0,
+      "max": 62.0
+    },
+    "after": {
+      "n": 20,
+      "mean": 42.0,
+      "sd": 8.54708322054649,
+      "sem": 1.9111859090489778,
+      "min": 29.0,
+      "max": 56.0
+    },
+    "differences": {
+      "n": 20,
+      "mean": 6.0,
+      "sd": 4.542199791661351,
+      "sem": 1.0156667501540162,
+      "min": -2.0,
+      "max": 14.0
+    },
+    "before_after_correlation": 0.8500846335960258,
+    "correlation_p_two_sided": 2.080412978674235e-06,
+    "test": {
+      "mean_difference": 6.0,
+      "se_difference": 1.0156667501540162,
+      "t": 5.907449465181524,
+      "df": 19,
+      "p_two_sided": 1.093436213939507e-05,
+      "ci95_lower": 3.8741850606649355,
+      "ci95_upper": 8.125814939335065
+    },
+    "faster_after_count": 17,
+    "slower_after_count": 2,
+    "unchanged_count": 1,
+    "sd_difference_from_covariance_identity": 4.54219979166135,
+    "se_if_covariance_term_omitted_for_teaching_only": 2.598582609606123
+  }
+}

@@ -1,0 +1,77 @@
+﻿Notes
+
+ Output Created                               16-OCT-2026 10:03:49              
+ Comments                                                                       
+ Input         Active Dataset                 RampHazard                        
+               Filter                         <none>                            
+               Weight                         <none>                            
+               Split File                     <none>                            
+               N of Rows in Working Data File 40                                
+ Missing Value Definition of Missing          User defined missing values are   
+ Handling                                     treated as missing.               
+               Cases Used                     Statistics for each analysis are  
+                                              based on the cases with no        
+                                              missing or out-of-range data for  
+                                              any variable in the analysis.     
+ Syntax                                       T-TEST GROUPS=training(1 2)       
+                                                                                
+                                              /VARIABLES=report_seconds         
+                                                                                
+                                              /MISSING=ANALYSIS                 
+                                                                                
+                                              /CRITERIA=CI(.95).                
+                                                                                
+ Resources     Processor Time                 00:00:00.00                       
+               Elapsed Time                   00:00:00.01                       
+
+Group Statistics
+
+                  Assigned training   N  Mean    Std. Deviation Std. Error Mean 
+                  method                                                        
+ Time to          Standard briefing   20 48.0000 8.00000        1.78885         
+ correctly report                                                               
+ a simulated ramp                                                               
+ hazard (seconds) Scenario practice   20 42.0000 8.00000        1.78885         
+
+Independent Samples Test
+
+             Levene's    t-test for Equality of Means                           
+             Test for                                                           
+             Equality of                                                        
+             Variances                                                          
+             F      Sig. t     df     Significance  Mean   Std.   95%           
+                                                    Differ Error  Confidence    
+                                                    ence   Differ Interval of   
+                                                           ence   the           
+                                                                  Difference    
+                                      One-Si Two-Si               Lower  Upper  
+                                      ded p  ded p                              
+ Time Equal  .280   .600 2.372 38     .011   .023   6.0000 2.5298 .87864 11.121 
+ to   varian                                        0      2             36     
+ corr ces                                                                       
+ ectl assume                                                                    
+ y    d                                                                         
+ repo                                                                           
+ rt a                                                                           
+ simu                                                                           
+ late                                                                           
+ d                                                                              
+ ramp Equal              2.372 38.000 .011   .023   6.0000 2.5298 .87864 11.121 
+ haza varian                            0      2             36     
+ rd   ces                                                                       
+ (sec not                                                                       
+ onds assume                                                                    
+ )    d                                                                         
+
+Independent Samples Effect Sizes
+
+                               Standardizer(a) Point    95% Confidence Interval 
+                                               Estimate Lower             Upper 
+ Time to        Cohen's d      8.00000         .750     .103              1.388 
+ correctly                                                                      
+ report a                                                                       
+ simulated ramp Hedges'        8.16235         .735     .101              1.360 
+ hazard         correction                                                      
+ (seconds)      Glass's delta  8.00000         .750     .078              1.405 
+a The denominator used in estimating the effect sizes. \nCohen's d uses the pooled standard deviation. \nHedges' correction uses the pooled standard deviation, plus a correction factor. \nGlass's delta uses the sample standard deviation of the control (i.e., the second) group.
+
